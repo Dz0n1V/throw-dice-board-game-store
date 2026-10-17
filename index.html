@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Throw Dice</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" v-cloak>
+        <header class="bg-dark text-white p-3 d-flex justify-content-between align-items-center d-print-none">
+            <div class="d-flex align-items-center">
+                <div class="logo-placeholder me-3">TD</div>
+                <h1 class="h3 mb-0">Throw Dice</h1>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-light me-2" @click="changeLang('sr', $event)">SR</button>
+                <button class="btn btn-sm btn-outline-light" @click="changeLang('en', $event)">EN</button>
+            </div>
+        </header>
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom d-print-none">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item" v-for="item in menuItems" :key="item.id">
+                            <a class="nav-link" :class="{ active: currentRoute === item.id }" href="#" @click.prevent="navigate(item.id)">{{ t(item.labelKey) }}</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-2 d-print-none">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li v-for="(crumb, idx) in breadcrumbs" :key="idx" class="breadcrumb-item" :class="{ active: crumb.isActive }">
+                        <a v-if="!crumb.isActive" href="#" @click.prevent="navigate(crumb.route, crumb.gameId)">{{ crumb.name }}</a>
+                        <span v-else>{{ crumb.name }}</span>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <main class="container mt-4 mb-5 flex-grow-1">
+            <!-- HOME -->
+            <section v-if="currentRoute === 'home'" class="d-print-none">
+                <h2>{{ t('promotions') }}</h2>
+                <div v-for="promo in promotions" :key="promo.id" :class="'alert alert-' + promo.type">{{ promo.text }}</div>
+                <h3 class="mt-4">{{ t('topRated') }}</h3>
+                <div class="row">
+                    <div class="col-md-4" v-for="game in topGames" :key="game.id">
+                        <div class="card mb-3 h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ gameName(game) }}</h5>
+                                <p class="card-text mb-1">{{ t('price') }} {{ game.price }} RSD</p>
+                                <p class="card-text mb-1">{{ t('rating') }} {{ game.rating }} / 5 <small>({{ game.ratingCount }} {{ t('votes') }})</small></p>
+                                <div class="mb-3">
+                                    <button v-for="n in 5" :key="n" class="btn btn-sm me-1 py-0 px-1" :class="userVoted[game.id] === n ? 'btn-warning text-dark border-warning' : 'btn-outline-warning'" :disabled="userVoted[game.id] !== undefined" @click="rateGame(game, n, $event)">{{ n }}★</button>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent d-flex justify-content-between">
+                                <button class="btn btn-primary" @click="addToCart(game)">{{ t('addToCart') }}</button>
+                                <button class="btn btn-info" @click="navigate('game', game.id)">{{ t('details') }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Useful links / banners -->
+                <div class="mt-5">
+                    <h3>{{ t('usefulLinks') }}</h3>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">🎲 BoardGameGeek</h5>
+                                    <p class="card-text">{{ t('linkBgg') }}</p>
+                                    <a href="https://boardgamegeek.com/" target="_blank" class="btn btn-outline-primary">{{ t('visit') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">🏆 Catan</h5>
+                                    <p class="card-text">{{ t('linkCatan') }}</p>
+                                    <a href="https://www.catan.com/" target="_blank" class="btn btn-outline-primary">{{ t('visit') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5 class="card-title">🎮 Asmodee</h5>
+                                    <p class="card-text">{{ t('linkAsmodee') }}</p>
+                                    <a href="https://www.asmodee.com/" target="_blank" class="btn btn-outline-primary">{{ t('visit') }}</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GALERIJA -->
+            <section v-if="currentRoute === 'gallery'" class="d-print-none">
+                <h2>{{ t('galleryTitle') }}</h2>
+                
+                <h3 class="mt-4">{{ t('storePhotos') }}</h3>
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <img src="shopImages/shopOutside.png" class="gallery-img" alt="Store front">
+                        <p class="text-center mt-2">{{ t('storeFront') }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <img src="shopImages/shopInside.png" class="gallery-img" alt="Store interior">
+                        <p class="text-center mt-2">{{ t('storeInterior') }}</p>
+                    </div>
+                </div>
+
+                <h3>{{ t('gamePhotos') }}</h3>
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <img src="boardGames/catan.png" class="gallery-img" alt="Catan">
+                        <p class="text-center mt-2">{{ gameName(games[0]) }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <img src="boardGames/ticketToRide.png" class="gallery-img" alt="Ticket to Ride">
+                        <p class="text-center mt-2">{{ gameName(games[1]) }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <img src="boardGames/dixit.png" class="gallery-img" alt="Dixit">
+                        <p class="text-center mt-2">{{ gameName(games[2]) }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <img src="boardGames/bloodRage.png" class="gallery-img" alt="Blood Rage">
+                        <p class="text-center mt-2">{{ gameName(games[12]) }}</p>
+                    </div>
+                </div>
+
+                <h3>{{ t('videoGallery') }}</h3>
+                <div class="row equal-height">
+                    <div class="col-md-6 mb-4">
+                        <div class="video-container">
+                            <video controls style="width:100%; height:100%; object-fit: cover;">
+                                <source src="videos/howToPlayCatan.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                        <p class="text-center mt-2">{{ t('videoPlaceholder1') }}</p>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <video controls style="width:100%; height:100%; object-fit: cover;">
+                                <source src="videos/promotionalVideo.mp4" type="video/mp4">
+                        </video>
+                        <p class="text-center mt-2">{{ t('videoPlaceholder2') }}</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CATALOG -->
+            <section id="catalog-section" v-if="currentRoute === 'catalog'">
+                <div class="d-flex justify-content-between mb-3">
+                    <h2>{{ t('catalog') }}</h2>
+                    <button class="btn btn-secondary d-print-none" @click="downloadPDF($event)">{{ t('downloadCatalog') }} (PDF)</button>
+                </div>
+                <div class="row mb-4 d-print-none">
+                    <div class="col-md-4"><input type="text" class="form-control" :placeholder="t('search')" v-model="searchQuery"></div>
+                    <div class="col-md-4"><select class="form-select" v-model="sortBy"><option value="name">{{ t('sortName') }}</option><option value="price">{{ t('sortPrice') }}</option></select></div>
+                    <div class="col-md-4"><select class="form-select" v-model="filterCategory"><option v-for="cat in categoriesFilter" :key="cat.value" :value="cat.value">{{ t(cat.labelKey) }}</option></select></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4" v-for="game in filteredGames" :key="game.id">
+                        <div class="card h-100">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">{{ gameName(game) }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{ categoryName(game.category) }}</h6>
+                                <p class="card-text flex-grow-1">{{ gameDesc(game) }}</p>
+                                <div class="d-print-none mb-2">
+                                    <p class="mb-1">{{ t('price') }} {{ game.price }} RSD</p>
+                                    <p class="mb-1">{{ t('rating') }} <strong>{{ game.rating }} / 5</strong> <small>({{ game.ratingCount }} {{ t('votes') }})</small></p>
+                                    <button v-for="n in 5" :key="n" class="btn btn-sm me-1 py-0 px-1" :class="userVoted[game.id] === n ? 'btn-warning text-dark border-warning' : 'btn-outline-warning'" :disabled="userVoted[game.id] !== undefined" @click="rateGame(game, n, $event)">{{ n }}★</button>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent d-flex justify-content-between">
+                                <button class="btn btn-success" @click="addToCart(game)">{{ t('addToCart') }}</button>
+                                <button class="btn btn-info" @click="navigate('game', game.id)">{{ t('details') }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GAME DETAILS -->
+            <section v-if="currentRoute === 'game' && selectedGame" class="d-print-none">
+                <div class="mb-3"><button class="btn btn-outline-secondary" @click="goBackToCatalog">← {{ t('backToCatalog') }}</button></div>
+                <div class="card mb-4"><div class="card-body"><h2>{{ gameName(selectedGame) }}</h2><h6 class="text-muted">{{ categoryName(selectedGame.category) }}</h6><p class="mt-3">{{ gameDesc(selectedGame) }}</p><p><strong>{{ t('price') }}</strong> {{ selectedGame.price }} RSD</p><p><strong>{{ t('rating') }}</strong> {{ selectedGame.rating }} / 5 ({{ selectedGame.ratingCount }} {{ t('votes') }})</p><div class="mb-3"><button v-for="n in 5" :key="n" class="btn btn-sm me-1 py-0 px-1" :class="userVoted[selectedGame.id] === n ? 'btn-warning text-dark border-warning' : 'btn-outline-warning'" :disabled="userVoted[selectedGame.id] !== undefined" @click="rateGame(selectedGame, n, $event)">{{ n }}★</button></div><button class="btn btn-success" @click="addToCart(selectedGame)">{{ t('addToCart') }}</button></div></div>
+                <div class="card"><div class="card-header"><h4 class="mb-0">{{ t('comments') }}</h4></div><div class="card-body"><div v-if="gameComments.length === 0" class="alert alert-secondary">{{ t('noComments') }}</div><div v-else class="mb-4"><div v-for="comment in gameComments" :key="comment.id" class="border-bottom pb-2 mb-2"><strong>{{ comment.author }}</strong> <small class="text-muted">{{ comment.date }}</small><p class="mb-0 mt-1">{{ comment.text }}</p></div></div><hr><h5>{{ t('addComment') }}</h5><form @submit.prevent="addComment"><div class="mb-2"><input type="text" class="form-control" :placeholder="t('yourName')" v-model="newCommentAuthor" required></div><div class="mb-2"><textarea class="form-control" rows="3" :placeholder="t('yourComment')" v-model="newCommentText" required></textarea></div><button type="submit" class="btn btn-primary">{{ t('submit') }}</button></form></div></div>
+            </section>
+
+            <!-- ACCOUNT -->
+            <section v-if="currentRoute === 'account'" class="d-print-none">
+                <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                    <h2>{{ t('cart') }}</h2>
+                    <div class="d-flex btn-group-custom">
+                        <button class="btn btn-danger me-3" @click="clearAllRatings($event)">{{ t('clearRatings') }}</button>
+                        <button class="btn btn-danger ms-3" @click="clearAllComments($event)">{{ t('clearComments') }}</button>
+                    </div>
+                </div>
+                <div v-if="cart.length === 0" class="alert alert-warning mt-3">{{ t('emptyCart') }}</div>
+                <div v-else class="table-responsive mt-3">
+                    <table class="table"><thead><tr><th>{{ t('nameHeader') }}</th><th>{{ t('qtyHeader') }}</th><th>{{ t('priceHeader') }}</th><th>{{ t('actionHeader') }}</th></tr></thead>
+                    <tbody><tr v-for="(item, index) in cart" :key="index"><td>{{ gameName(item.game) }}</td><td><input type="number" v-model.number="item.qty" min="1" class="form-control" style="min-width:70px;max-width:100px;" @change="saveCart"></td><td>{{ item.game.price * item.qty }} RSD</td><td><button class="btn btn-danger btn-sm" @click="removeFromCart(index)">{{ t('remove') }}</button></td></tr></tbody>
+                    <tfoot><tr><td colspan="2" class="text-end"><strong>{{ t('total') }}</strong></td><td colspan="2"><strong>{{ cartTotal }} RSD</strong></td></tr></tfoot>
+                    </table>
+                    <button class="btn btn-primary" @click="finalizePurchase">{{ t('finalize') }}</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-5"><h3>{{ t('orderHistory') }}</h3><button v-if="orderHistory.length > 0" class="btn btn-outline-danger btn-sm" @click="clearOrderHistory($event)">{{ t('clearHistory') }}</button></div>
+                <div v-if="orderHistory.length === 0" class="alert alert-secondary mt-3">{{ t('noOrders') }}</div>
+                <ul class="list-group mt-3" v-else><li class="list-group-item" v-for="(order, index) in orderHistory" :key="index">{{ t('orderPrefix') }}{{ index + 1 }} - {{ t('totalPrice') }} {{ order.total }} RSD ({{ t('dateLabel') }}: {{ order.date }})</li></ul>
+            </section>
+
+            <!-- ABOUT US -->
+            <section v-if="currentRoute === 'about'" class="d-print-none">
+                <h2>{{ t('aboutUs') }}</h2>
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>📖 {{ t('aboutHistory') }}</h4>
+                        <p>{{ t('aboutText1') }}</p>
+                        
+                        <h4>🎯 {{ t('aboutMission') }}</h4>
+                        <p>{{ t('aboutText2') }}</p>
+                        
+                        <h4>🏆 {{ t('aboutAwards') }}</h4>
+                        <ul>
+                            <li>{{ t('aboutAward1') }}</li>
+                            <li>{{ t('aboutAward2') }}</li>
+                            <li>{{ t('aboutAward3') }}</li>
+                        </ul>
+                        
+                        <h4>🕒 {{ t('aboutWorkingHours') }}</h4>
+                        <p style="white-space: pre-line;">{{ t('aboutHours') }}</p>
+                        
+                        <h4>📞 {{ t('aboutContact') }}</h4>
+                        <p>{{ t('aboutPhone') }}<br>{{ t('aboutEmail') }}<br>{{ t('aboutAddress') }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light p-3">
+                            <h5>📍 {{ t('aboutLocation') }}</h5>
+                            <iframe 
+                                :src="mapUrl"
+                                width="100%" 
+                                height="250" 
+                                style="border:0; border-radius:8px;" 
+                                allowfullscreen="" 
+                                loading="lazy">
+                            </iframe>
+                            <p class="mt-2 small text-muted">👉 {{ t('aboutMarkerNote') }}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer class="bg-dark text-white text-center p-3 mt-auto w-100 d-print-none">
+            <p class="mb-0">{{ t('copyright') }}</p>
+        </footer>
+    </div>
+    <script src="js/vue.global.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

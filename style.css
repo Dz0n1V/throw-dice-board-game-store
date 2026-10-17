@@ -1,0 +1,122 @@
+[v-cloak] {
+    display: none;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #07f7ff;
+    color: #000;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+.navbar-nav .nav-link.active {
+    font-weight: bold;
+    color: #0d6efd !important;
+    border-bottom: 2px solid #0d6efd;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-warning:disabled {
+    opacity: 1 !important;
+    cursor: default;
+}
+
+.btn-group-custom {
+    gap: 1.5rem !important;
+}
+.map-marker {
+    border: 2px solid red;
+    border-radius: 50%;
+}
+
+.gallery-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.2s;
+ }
+
+.gallery-img:hover {
+    transform: scale(1.02);
+}
+
+.video-container {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 */
+    height: 0;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.video-container video,
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+}
+
+.row.equal-height {
+    display: flex;
+    flex-wrap: wrap;
+}
+.row.equal-height .col-md-6 {
+    display: flex;
+    flex-direction: column;
+}
+.row.equal-height .video-container {
+    flex: 1; /* stretch to fill the available height */
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #catalog-section, #catalog-section * {
+        visibility: visible;
+    }
+    #catalog-section {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .d-print-none, .btn {
+        display: none !important;
+    }
+    .card {
+        page-break-inside: avoid;
+        border: 1px solid #000;
+        margin-bottom: 20px;
+    }
+}
